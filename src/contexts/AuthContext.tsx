@@ -33,7 +33,7 @@ const initialAdminUser: User = {
   email: 'admin@qrcode.com',
   role: 'admin',
   name: 'Administrateur',
-  password: '$2a$10$X7UrH5YxX5YxX5YxX5YxX.5YxX5YxX5YxX5YxX5YxX5YxX5YxX5YxX' // "Admin123!" hashed
+  password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy' // "Admin123!" hashed
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -54,19 +54,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Tentative de connexion avec:', { email });
       
       const user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      console.log('Utilisateur trouvé:', user ? 'Oui' : 'Non');
       
       if (!user) {
         throw new Error('Utilisateur non trouvé');
       }
       
       if (!user.password) {
+        console.log('Pas de mot de passe pour cet utilisateur');
         throw new Error('Compte invalide');
       }
 
+      console.log('Vérification du mot de passe...');
       const isValidPassword = await bcrypt.compare(password, user.password);
+      console.log('Mot de passe valide:', isValidPassword);
       
       if (!isValidPassword) {
         throw new Error('Mot de passe incorrect');
@@ -88,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         navigate('/client/dashboard');
       }
     } catch (error) {
+      console.error('Erreur de connexion:', error);
       toast({
         title: 'Échec de connexion',
         description: error instanceof Error ? error.message : 'Une erreur inconnue est survenue',
