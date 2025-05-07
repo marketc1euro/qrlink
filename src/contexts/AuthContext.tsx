@@ -32,22 +32,69 @@ const initialAdminUser: User = {
   email: 'admin@qrcode.com',
   role: 'admin',
   name: 'Administrateur',
-  password: 'Admin123!' // Simple password for testing
+  password: 'Admin123!'
+};
+
+// Mock users storage
+const MOCK_USERS_KEY = 'qrlink_users';
+const CURRENT_USER_KEY = 'qrlink_current_user';
+
+// Helper functions for storage
+const getStoredUsers = (): User[] => {
+  try {
+    const stored = localStorage.getItem(MOCK_USERS_KEY);
+    return stored ? JSON.parse(stored) : [initialAdminUser];
+  } catch (error) {
+    console.error('Error reading users from storage:', error);
+    return [initialAdminUser];
+  }
+};
+
+const setStoredUsers = (users: User[]) => {
+  try {
+    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+  } catch (error) {
+    console.error('Error saving users to storage:', error);
+  }
+};
+
+const getStoredUser = (): User | null => {
+  try {
+    const stored = localStorage.getItem(CURRENT_USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Error reading current user from storage:', error);
+    return null;
+  }
+};
+
+const setStoredUser = (user: User | null) => {
+  try {
+    if (user) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
+  } catch (error) {
+    console.error('Error saving current user to storage:', error);
+  }
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [mockUsers, setMockUsers] = useState<User[]>([initialAdminUser]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [mockUsers, setMockUsers] = useState<User[]>(getStoredUsers);
+  const [currentUser, setCurrentUser] = useState<User | null>(getStoredUser);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Update storage when users change
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
+    setStoredUsers(mockUsers);
+  }, [mockUsers]);
+
+  // Update storage when current user changes
+  useEffect(() => {
+    setStoredUser(currentUser);
+  }, [currentUser]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -66,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { password: _, ...userWithoutPassword } = user;
       
       setCurrentUser(userWithoutPassword);
-      localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
       
       toast({
         title: 'Connexion réussie',
@@ -118,7 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('currentUser');
     toast({
       title: 'Déconnexion',
       description: 'Vous avez été déconnecté avec succès.',
