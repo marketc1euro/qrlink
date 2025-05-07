@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import bcrypt from 'bcryptjs';
 
 // Types for our users
 export interface User {
@@ -27,13 +26,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Initial admin user with hashed password
+// Admin user with simple password
 const initialAdminUser: User = {
   id: '1',
   email: 'admin@qrcode.com',
   role: 'admin',
   name: 'Administrateur',
-  password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy' // "Admin123!" hashed
+  password: 'Admin123!' // Simple password for testing
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -43,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for stored user on mount
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
@@ -54,25 +52,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      console.log('Tentative de connexion avec:', { email });
       
       const user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-      console.log('Utilisateur trouvé:', user ? 'Oui' : 'Non');
       
       if (!user) {
         throw new Error('Utilisateur non trouvé');
       }
       
-      if (!user.password) {
-        console.log('Pas de mot de passe pour cet utilisateur');
-        throw new Error('Compte invalide');
-      }
-
-      console.log('Vérification du mot de passe...');
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      console.log('Mot de passe valide:', isValidPassword);
-      
-      if (!isValidPassword) {
+      if (user.password !== password) {
         throw new Error('Mot de passe incorrect');
       }
       
@@ -92,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         navigate('/client/dashboard');
       }
     } catch (error) {
-      console.error('Erreur de connexion:', error);
       toast({
         title: 'Échec de connexion',
         description: error instanceof Error ? error.message : 'Une erreur inconnue est survenue',
@@ -108,13 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!userData.password) {
         throw new Error('Le mot de passe est requis');
       }
-
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
       
       const newUser: User = {
         ...userData,
-        id: Date.now().toString(),
-        password: hashedPassword
+        id: Date.now().toString()
       };
 
       setMockUsers(prev => [...prev, newUser]);
