@@ -43,7 +43,13 @@ const CURRENT_USER_KEY = 'qrlink_current_user';
 const getStoredUsers = (): User[] => {
   try {
     const stored = localStorage.getItem(MOCK_USERS_KEY);
-    return stored ? JSON.parse(stored) : [initialAdminUser];
+    if (stored) {
+      const users = JSON.parse(stored);
+      // Vérifier si l'admin existe déjà
+      const hasAdmin = users.some((user: User) => user.email === initialAdminUser.email);
+      return hasAdmin ? users : [initialAdminUser, ...users];
+    }
+    return [initialAdminUser];
   } catch (error) {
     console.error('Error reading users from storage:', error);
     return [initialAdminUser];
@@ -98,8 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      setLoading(true);
-      
       const user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
       
       if (!user) {
@@ -130,8 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error instanceof Error ? error.message : 'Une erreur inconnue est survenue',
         variant: 'destructive',
       });
-    } finally {
-      setLoading(false);
+      throw error;
     }
   };
 
@@ -141,12 +144,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Le mot de passe est requis');
       }
       
+      // Vérifier si l'utilisateur existe déjà
+      const existingUser = mockUsers.find(u => u.email.toLowerCase() === userData.email.toLowerCase());
+      if (existingUser) {
+        throw new Error('Un utilisateur avec cet email existe déjà');
+      }
+      
       const newUser: User = {
         ...userData,
         id: Date.now().toString()
       };
 
-      setMockUsers(prev => [...prev, newUser]);
+      const updatedUsers = [...mockUsers, newUser];
+      setMockUsers(updatedUsers);
+      setStoredUsers(updatedUsers);
       
       toast({
         title: 'Compte créé',
