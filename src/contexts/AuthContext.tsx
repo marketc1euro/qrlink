@@ -92,6 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Initialize loading state
+  useEffect(() => {
+    setLoading(false);
+  }, []);
+
   // Update storage when users change
   useEffect(() => {
     setStoredUsers(mockUsers);
@@ -103,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [currentUser]);
 
   const login = async (email: string, password: string) => {
+    setLoading(true);
     try {
       const user = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
       
@@ -135,6 +141,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: 'destructive',
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
