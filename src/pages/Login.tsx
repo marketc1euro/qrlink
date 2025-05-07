@@ -69,17 +69,6 @@ const Login: React.FC = () => {
               </CardFooter>
             </form>
           </Card>
-          
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <div className="mb-4">
-              <p className="font-medium">Identifiants administrateur :</p>
-              <p>Email: admin@qrcode.com</p>
-              <p>Mot de passe: Admin123!</p>
-            </div>
-            <p>
-              Ces identifiants sont réels et sécurisés. Le mot de passe est haché et stocké de manière sécurisée.
-            </p>
-          </div>
         </div>
       </div>
     </MainLayout>
